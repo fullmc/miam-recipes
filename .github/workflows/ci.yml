@@ -63,3 +63,18 @@ jobs:
         cd frontend
         npm run build || echo "No build step defined, skipping..."
 
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+
+    - name: Build backend image
+      run: docker build -t ${{ secrets.DOCKER_USER }}/miam-backend ./backend
+
+    - name: Build frontend image
+      run: docker build -t ${{ secrets.DOCKER_USER }}/miam-frontend ./frontend
+
+    - name: Push backend image
+      run: docker push ${{ secrets.DOCKER_USER }}/miam-backend
+
+    - name: Push frontend image
+      run: docker push ${{ secrets.DOCKER_USER }}/miam-frontend
+
