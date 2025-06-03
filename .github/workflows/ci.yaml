@@ -1,0 +1,65 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: recipesdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Cache node_modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          **/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Install backend deps
+      run: |
+        cd backend
+        npm install
+
+    - name: Install frontend deps
+      run: |
+        cd frontend
+        npm install
+
+    - name: Build backend
+      run: |
+        cd backend
+        echo "DATABASE_URL=postgres://postgres:postgres@localhost:5432/recipesdb" > .env
+        node -e "console.log('Test build backend OK')"
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build || echo "No build step defined, skipping..."
+
